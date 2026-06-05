@@ -1,10 +1,57 @@
 "use client";
 
 import { ArrowDownAZ, ArrowUpAZ, Plus, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import type { Application, ApplicationResult, SortDirection } from "@/lib/types";
 import { ResultBadge } from "@/components/ResultBadge";
 
 const resultOptions: ApplicationResult[] = ["합격", "불합격", "미정"];
+
+interface ComposingInputProps {
+  value: string;
+  placeholder?: string;
+  onCommit: (value: string) => void;
+}
+
+function ComposingInput({
+  value,
+  placeholder,
+  onCommit,
+}: ComposingInputProps) {
+  const [draft, setDraft] = useState(value);
+  const composing = useRef(false);
+
+  useEffect(() => {
+    if (!composing.current) {
+      setDraft(value);
+    }
+  }, [value]);
+
+  return (
+    <input
+      className="control w-full"
+      placeholder={placeholder}
+      value={draft}
+      onBlur={() => onCommit(draft)}
+      onChange={(event) => {
+        const nextValue = event.target.value;
+        setDraft(nextValue);
+        if (!composing.current) {
+          onCommit(nextValue);
+        }
+      }}
+      onCompositionEnd={(event) => {
+        composing.current = false;
+        const nextValue = event.currentTarget.value;
+        setDraft(nextValue);
+        onCommit(nextValue);
+      }}
+      onCompositionStart={() => {
+        composing.current = true;
+      }}
+    />
+  );
+}
 
 interface ApplicationTableProps {
   applications: Application[];
@@ -89,21 +136,15 @@ export function ApplicationTable({
                   />
                 </td>
                 <td className="border-b border-line px-3 py-2">
-                  <input
-                    className="control w-full"
+                  <ComposingInput
                     value={item.company}
-                    onChange={(event) =>
-                      onUpdate(item.id, { company: event.target.value })
-                    }
+                    onCommit={(company) => onUpdate(item.id, { company })}
                   />
                 </td>
                 <td className="border-b border-line px-3 py-2">
-                  <input
-                    className="control w-full"
+                  <ComposingInput
                     value={item.role}
-                    onChange={(event) =>
-                      onUpdate(item.id, { role: event.target.value })
-                    }
+                    onCommit={(role) => onUpdate(item.id, { role })}
                   />
                 </td>
                 <td className="min-w-64 border-b border-line px-3 py-2">
@@ -127,13 +168,10 @@ export function ApplicationTable({
                   </div>
                 </td>
                 <td className="border-b border-line px-3 py-2">
-                  <input
-                    className="control w-full"
+                  <ComposingInput
                     placeholder="면접 일정, 공고 링크 등"
                     value={item.memo}
-                    onChange={(event) =>
-                      onUpdate(item.id, { memo: event.target.value })
-                    }
+                    onCommit={(memo) => onUpdate(item.id, { memo })}
                   />
                 </td>
                 <td className="border-b border-line px-3 py-2 text-center">
